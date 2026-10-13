@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 
 ## [Unreleased]
 
+### Added
+
+- Settings → Viewer & Editor → Editor (F4) can use any application: Choose Application… picks one
+  from disk (Visual Studio Code, VSCodium, anything else), adds it to the list and selects it;
+  Remove from List takes an added application out again. VSCodium is also listed on its own when
+  it is installed.
+
 ## [0.3.1] - 2026-10-11
 
 ### Changed
