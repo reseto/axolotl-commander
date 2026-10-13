@@ -183,6 +183,11 @@ final class PanelViewController: NSViewController {
             go(to: url)
         }
         volumeBar.onChooseServer = { [weak self] endpoint in self?.openServer(endpoint) }
+        volumeBar.onHotPaths = { [weak self] anchor in
+            guard let self else { return }
+            router?.activate(side)
+            showHotPathsMenu(anchoredTo: anchor)
+        }
         volumeBar.onChooseNetwork = { [weak self] in
             guard let self else { return }
             router?.activate(side)

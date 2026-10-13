@@ -5,6 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 
 ## [Unreleased]
 
+### Added
+
+- A folder button at the right end of the bar above each panel opens the hot paths (favorite
+  folders) menu of that panel, the same as Go → Hot Paths… (⇧F9). Its tooltip reads "Go to Hot
+  Path". The bar hides volumes from the end when it is too narrow, never this button.
+
+### Changed
+
+- The Hot Paths toolbar button (offered by Customize Toolbar) has a folder icon instead of a
+  star, like the new button.
+
 ## [0.3.1] - 2026-10-11
 
 ### Changed

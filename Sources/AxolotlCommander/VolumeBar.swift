@@ -18,8 +18,11 @@ final class VolumeBar: NSView {
     var onCopyServerAddress: ((RemoteEndpoint) -> Void)?
     var onDisconnectServer: ((RemoteEndpoint) -> Void)?
     var onConnectToServer: (() -> Void)?
+    /// The folder button at the trailing edge; the view is where the hot paths menu is anchored.
+    var onHotPaths: ((NSView) -> Void)?
 
     private let stack = NSStackView()
+    private let hotPathsButton = NSButton()
     private var items: [VolumeBarModel.Item] = []
     private var settings = VolumeBar.savedSettings
     /// The shown location, its server and (for a local one) the mount point containing it.
@@ -49,11 +52,14 @@ final class VolumeBar: NSView {
         stack.detachesHiddenViews = true
         stack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(stack)
+        configureHotPathsButton()
         NSLayoutConstraint.activate([
             stack.leadingAnchor.constraint(equalTo: leadingAnchor),
-            stack.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor),
+            stack.trailingAnchor.constraint(lessThanOrEqualTo: hotPathsButton.leadingAnchor, constant: -Self.hotPathsGap),
             stack.topAnchor.constraint(equalTo: topAnchor),
             stack.bottomAnchor.constraint(equalTo: bottomAnchor),
+            hotPathsButton.trailingAnchor.constraint(equalTo: trailingAnchor),
+            hotPathsButton.centerYAnchor.constraint(equalTo: centerYAnchor),
         ])
         let workspace = NSWorkspace.shared.notificationCenter
         for name in [NSWorkspace.didMountNotification, NSWorkspace.didUnmountNotification,
@@ -69,6 +75,9 @@ final class VolumeBar: NSView {
         observers.append(center.addObserver(forName: UserDefaults.didChangeNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.settingsChanged() }
         })
+        observers.append(center.addObserver(forName: KeyMaps.didChange, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.updateHotPathsToolTip() }
+        })
         reload()
     }
 
@@ -79,6 +88,36 @@ final class VolumeBar: NSView {
         workspaceObservers.forEach(NSWorkspace.shared.notificationCenter.removeObserver)
         observers.forEach(NotificationCenter.default.removeObserver)
     }
+
+    // MARK: Hot paths button
+
+    private static let hotPathsGap: CGFloat = 4
+
+    /// A folder button at the trailing edge opens the hot paths (favorite folders) menu of this
+    /// panel. It has the icon of the Hot Paths toolbar button.
+    private func configureHotPathsButton() {
+        hotPathsButton.image = Self.symbol(MainToolbar.symbols[.hotPaths] ?? "folder")
+        hotPathsButton.imagePosition = .imageOnly
+        hotPathsButton.bezelStyle = .accessoryBarAction
+        hotPathsButton.setButtonType(.momentaryPushIn)
+        hotPathsButton.controlSize = .small
+        hotPathsButton.refusesFirstResponder = true
+        hotPathsButton.target = self
+        hotPathsButton.action = #selector(hotPathsClicked)
+        hotPathsButton.setContentHuggingPriority(.required, for: .horizontal)
+        hotPathsButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        hotPathsButton.setAccessibilityLabel(String(localized: "Go to Hot Path"))
+        hotPathsButton.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(hotPathsButton)
+        updateHotPathsToolTip()
+    }
+
+    private func updateHotPathsToolTip() {
+        let shortcut = KeyMaps.panel.chords(for: .hotPaths).first.map { " (\($0.description))" } ?? ""
+        hotPathsButton.toolTip = String(localized: "Go to Hot Path") + shortcut
+    }
+
+    @objc private func hotPathsClicked() { onHotPaths?(hotPathsButton) }
 
     /// Marks the item of `location` (a folder on disk or on a server).
     func show(location: URL) {
@@ -120,11 +159,13 @@ final class VolumeBar: NSView {
 
     /// A bar too narrow for every item hides items from the end, so volumes stay visible
     /// longest (each stays reachable through the volume menu); the first item only truncates.
+    /// The hot paths button keeps its place at the trailing edge.
     private func fitItems() {
+        let available = bounds.width - hotPathsButton.fittingSize.width - Self.hotPathsGap
         var used: CGFloat = 0
         for (index, view) in stack.arrangedSubviews.enumerated() {
             used += (index > 0 ? stack.spacing : 0) + view.fittingSize.width
-            let hide = index > 0 && used > bounds.width
+            let hide = index > 0 && used > available
             if view.isHidden != hide { view.isHidden = hide }
         }
     }

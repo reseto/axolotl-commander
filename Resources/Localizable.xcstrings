@@ -2846,6 +2846,17 @@
         }
       }
     },
+    "Go to Hot Path": {
+      "extractionState": "manual",
+      "localizations": {
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Přejít na oblíbenou cestu"
+          }
+        }
+      }
+    },
     "Go to Hot Path 1": {
       "extractionState": "manual",
       "localizations": {

@@ -160,7 +160,8 @@ local network and the mounted network volumes. Enter on an SMB or AFP server ask
 and the share in the macOS dialog and enters the mounted share; Enter on an SFTP server opens
 Connect to Server with its address. Right-click Network for a quick menu of mounted network
 volumes, open connections and Connect to Server… (also in the toolbar, ⌘K).
-Settings → Appearance chooses what the bar shows, including an optional Home button.
+Settings → Appearance chooses what the bar shows, including an optional Home button. The folder
+button at its right end opens the hot paths (favorite folders) menu of that panel, like ⇧F9.
 
 | Key | Command | Key | Command |
 |---|---|---|---|

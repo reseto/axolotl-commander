@@ -24,7 +24,7 @@ enum MainToolbar {
         .quickLook: "eye.square", .properties: "info.circle", .makeDirectory: "folder.badge.plus",
         .openTerminal: "terminal", .revealInFinder: "macwindow", .comparePanels: "rectangle.split.2x1",
         .maximizePanel: "arrow.up.left.and.arrow.down.right", .calculateSizes: "sum",
-        .find: "magnifyingglass", .hotPaths: "star", .newTab: "plus.square.on.square",
+        .find: "magnifyingglass", .hotPaths: "folder", .newTab: "plus.square.on.square",
         .filter: "line.3.horizontal.decrease.circle", .changeDirectory: "arrow.right.circle",
         .copy: "doc.on.doc", .move: "arrow.right.doc.on.clipboard", .delete: "trash",
         .connectToServer: "network", .disconnect: "eject",

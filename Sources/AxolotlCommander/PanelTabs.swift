@@ -89,8 +89,9 @@ extension PanelViewController {
 
     // MARK: Hot paths
 
-    /// ⇧F9: defined hot paths, plus saving the current folder.
-    func showHotPathsMenu() {
+    /// ⇧F9: defined hot paths, plus saving the current folder. The menu opens under `anchor` (the
+    /// button of the volume bar), else under the path bar.
+    func showHotPathsMenu(anchoredTo anchor: NSView? = nil) {
         let menu = NSMenu()
         let hotPaths = AppSettings.shared.hotPaths
         for (slot, hotPath) in hotPaths.defined {
@@ -130,7 +131,11 @@ extension PanelViewController {
         let edit = NSMenuItem(title: String(localized: "Edit Hot Paths…"), action: #selector(editHotPaths), keyEquivalent: "")
         edit.target = self
         menu.addItem(edit)
-        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: pathBar.bounds.height + 2), in: pathBar)
+        if let anchor {
+            menu.popUp(positioning: nil, at: NSPoint(x: 0, y: anchor.isFlipped ? anchor.bounds.height + 2 : -2), in: anchor)
+        } else {
+            menu.popUp(positioning: nil, at: NSPoint(x: 0, y: pathBar.bounds.height + 2), in: pathBar)
+        }
     }
 
     @objc private func hotPathChosen(_ sender: NSMenuItem) { goToHotPath(sender.tag) }
