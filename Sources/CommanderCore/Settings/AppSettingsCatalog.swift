@@ -76,6 +76,9 @@ extension SettingsCatalog {
         "recentPaths", "commandLine.history", "find.history.\\(key)", "find.options",
         "batchRename.last", "changeCase.last", "functionKeyNotice", "buttonBar.editSelection",
         "transfer.recentDestinations", "app.lastRunVersion",
+        // Editors added in Settings → Viewer & Editor: their locations on this Mac. The chosen
+        // editor itself is exported as `editor.bundleID`.
+        "editor.customApps",
         // The update check's own state and its hidden test address (spec 027).
         "updates.lastCheck", "updates.lastSuccess", "updates.lastResult", "updates.availableVersion",
         "updates.skippedVersion", "updates.remindAfter", "updates.feedURL",

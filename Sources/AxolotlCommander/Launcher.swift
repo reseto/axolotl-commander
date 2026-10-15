@@ -89,6 +89,7 @@ enum Launcher {
         AppChoice(bundleID: "com.barebones.bbedit", name: "BBEdit"),
         AppChoice(bundleID: "com.sublimetext.4", name: "Sublime Text"),
         AppChoice(bundleID: "com.microsoft.VSCode", name: "Visual Studio Code"),
+        AppChoice(bundleID: "com.vscodium", name: "VSCodium"),
         AppChoice(bundleID: "dev.zed.Zed", name: "Zed"),
         AppChoice(bundleID: "com.panic.Nova", name: "Nova"),
         AppChoice(bundleID: "com.macromates.TextMate", name: "TextMate"),
@@ -100,10 +101,65 @@ enum Launcher {
         knownEditors.filter { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0.bundleID) != nil }
     }
 
+    // Applications the user picked with "Choose Application…". Their locations are kept, so an
+    // application LaunchServices does not know by identifier (one that was never opened) still works.
+    static let customEditorsDefaultsKey = "editor.customApps"
+
+    static var customEditorPaths: [String] {
+        UserDefaults.standard.stringArray(forKey: customEditorsDefaultsKey) ?? []
+    }
+
+    /// The listed custom applications that are still on disk.
+    private static func customEditors(at paths: [String]) -> [(url: URL, app: EditorList.App)] {
+        paths.compactMap { path in
+            let url = URL(fileURLWithPath: path)
+            guard FileManager.default.fileExists(atPath: path), let id = Bundle(url: url)?.bundleIdentifier else { return nil }
+            return (url, EditorList.App(bundleID: id, name: appName(at: url)))
+        }
+    }
+
+    private static func appName(at url: URL) -> String {
+        let info = Bundle(url: url)?.infoDictionary
+        return (info?["CFBundleDisplayName"] as? String) ?? (info?["CFBundleName"] as? String)
+            ?? url.deletingPathExtension().lastPathComponent
+    }
+
+    /// What the editor picker lists: installed known editors, then added ones. The current
+    /// choice is always among them.
+    static func editorChoices(selected: String, custom paths: [String]) -> [EditorList.App] {
+        EditorList.merged(known: installedEditors.map { EditorList.App(bundleID: $0.bundleID, name: $0.name) },
+                          custom: customEditors(at: paths).map(\.app),
+                          selected: selected == systemDefaultEditor ? nil : selected)
+    }
+
+    /// Adds the application at `url` to the editors. Nil when it is not an application bundle.
+    static func addEditor(at url: URL) -> EditorList.App? {
+        guard url.pathExtension.lowercased() == "app", let id = Bundle(url: url)?.bundleIdentifier else { return nil }
+        UserDefaults.standard.set(EditorList.adding(url.path, to: customEditorPaths), forKey: customEditorsDefaultsKey)
+        return EditorList.App(bundleID: id, name: appName(at: url))
+    }
+
+    /// True for an application added with `addEditor` (it can be removed again).
+    static func isCustomEditor(_ bundleID: String) -> Bool {
+        customEditors(at: customEditorPaths).contains { $0.app.bundleID == bundleID }
+            && !knownEditors.contains { $0.bundleID == bundleID }
+    }
+
+    static func removeEditor(bundleID: String) {
+        let keep = customEditorPaths.filter { Bundle(url: URL(fileURLWithPath: $0))?.bundleIdentifier != bundleID }
+        UserDefaults.standard.set(keep, forKey: customEditorsDefaultsKey)
+    }
+
+    /// The application for an editor setting: an added one by location, else by identifier.
+    private static func editorURL(bundleID: String) -> URL? {
+        customEditors(at: customEditorPaths).first { $0.app.bundleID == bundleID }?.url
+            ?? NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
+    }
+
     /// Opens `url` in the editor chosen in Settings (TextEdit by default).
     static func edit(_ url: URL) async throws {
         let choice = EditorChoice.resolve(chosen: UserDefaults.standard.string(forKey: editorDefaultsKey)) {
-            NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) != nil
+            editorURL(bundleID: $0) != nil
         }
         let configuration = NSWorkspace.OpenConfiguration()
         switch choice {
@@ -112,7 +168,7 @@ enum Launcher {
         case .missing(let bundleID):
             throw Failure.editorMissing(knownEditors.first { $0.bundleID == bundleID }?.name ?? bundleID)
         case .app(let bundleID):
-            guard let app = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
+            guard let app = editorURL(bundleID: bundleID) else {
                 throw Failure.editorMissing(bundleID)
             }
             _ = try await NSWorkspace.shared.open([url], withApplicationAt: app, configuration: configuration)

@@ -1748,6 +1748,39 @@
         }
       }
     },
+    "Choose an application (a .app).": {
+      "extractionState": "manual",
+      "localizations": {
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vyberte aplikaci (soubor .app)."
+          }
+        }
+      }
+    },
+    "Choose an Editor": {
+      "extractionState": "manual",
+      "localizations": {
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vyberte editor"
+          }
+        }
+      }
+    },
+    "Choose Application…": {
+      "extractionState": "manual",
+      "localizations": {
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vybrat aplikaci…"
+          }
+        }
+      }
+    },
     "Choose what duplicates have in common.": {
       "localizations": {
         "cs": {
@@ -10761,6 +10794,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "„%@“ nelze zkopírovat ani přesunout do sebe sama."
+          }
+        }
+      }
+    },
+    "“%@” can’t be used as an editor.": {
+      "extractionState": "manual",
+      "localizations": {
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„%@“ nelze použít jako editor."
           }
         }
       }

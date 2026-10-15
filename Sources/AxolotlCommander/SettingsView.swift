@@ -3,6 +3,7 @@
 
 import CommanderCore
 import SwiftUI
+import UniformTypeIdentifiers
 
 enum SettingsTab: String { case general, panels, viewer, appearance, hotPaths, userMenu, buttonBar, keyboard }
 
@@ -175,7 +176,8 @@ struct SettingsView: View {
 
 /// F3 viewer defaults and the F4 editor.
 private struct ViewerSettings: View {
-    @AppStorage(Launcher.editorDefaultsKey) private var editor = "com.apple.TextEdit"
+    @AppStorage(Launcher.editorDefaultsKey) private var editor = EditorChoice.defaultBundleID
+    @State private var customEditors = Launcher.customEditorPaths
     @AppStorage(ViewerDefaults.encodingKey) private var encoding = ViewerDefaults.fallbackEncoding.rawValue
     @AppStorage(ViewerDefaults.wrapKey) private var wrap = true
     @AppStorage(ViewerDefaults.highlightKey) private var highlight = true
@@ -197,13 +199,44 @@ private struct ViewerSettings: View {
             }
             Section("Editor (F4)") {
                 Picker("Editor:", selection: $editor) {
-                    ForEach(Launcher.installedEditors) { Text($0.name).tag($0.bundleID) }
+                    ForEach(Launcher.editorChoices(selected: editor, custom: customEditors)) { Text($0.name).tag($0.bundleID) }
                     Divider()
                     Text("Default App for the File Type").tag(Launcher.systemDefaultEditor)
+                }
+                HStack {
+                    Button("Choose Application…") { chooseEditor() }
+                    Button("Remove from List") {
+                        Launcher.removeEditor(bundleID: editor)
+                        customEditors = Launcher.customEditorPaths
+                        editor = EditorChoice.defaultBundleID
+                    }
+                    .disabled(!Launcher.isCustomEditor(editor))
                 }
             }
         }
         .formStyle(.grouped)
+    }
+
+    /// Any application can be the editor: the one chosen is added to the list and selected.
+    private func chooseEditor() {
+        let panel = NSOpenPanel()
+        panel.title = String(localized: "Choose an Editor")
+        panel.prompt = String(localized: "Choose")
+        panel.allowedContentTypes = [.application]
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.directoryURL = URL(fileURLWithPath: "/Applications", isDirectory: true)
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard let app = Launcher.addEditor(at: url) else {
+            let alert = NSAlert()
+            alert.messageText = String(localized: "“\(url.lastPathComponent)” can’t be used as an editor.")
+            alert.informativeText = String(localized: "Choose an application (a .app).")
+            alert.runModal()
+            return
+        }
+        customEditors = Launcher.customEditorPaths
+        editor = app.bundleID
     }
 }
 
